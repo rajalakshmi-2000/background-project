@@ -1,0 +1,1035 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>partysignup</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="rsvp_src/css/bootstrap.min.css">
+    <link rel="stylesheet" href="rsvp_src/css/style_dev.css">
+
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
+    <script src="rsvp_src/js/jquery-3.3.1.min.js"></script>
+    <script src="rsvp_src/js/bootstrap.min.js"></script>
+    <script src="rsvp_src/js/libphonenumber-js.min.js"></script>
+    <script src="rsvp_src/js/moment.min.js"></script>
+    <script src="rsvp_src/js/confetti.browser.js"></script>
+    <!-- <script src="https://unpkg.com/libphonenumber-js/bundle/libphonenumber-js.min.js"></script> -->
+
+    <script type='text/javascript'>
+        window.smartlook||(function(d) {
+        var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName('head')[0];
+        var c=d.createElement('script');o.api=new Array();c.async=true;c.type='text/javascript';
+        c.charset='utf-8';c.src='https://rec.smartlook.com/recorder.js';h.appendChild(c);
+        })(document);
+        smartlook('init', '1136860255ec2a5017a79ee3f1e95094a0b94655');
+    </script>
+
+    <script>
+        // for sufari not showing alert issue
+        $(window).bind("pageshow", function(e) { // e -> event
+            if (e.originalEvent.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+
+    <script>
+        $(document).ready(function(){
+            var scale = 'scale(1)';
+            document.body.style.webkitTransform = scale;      // Chrome, Opera, Safari
+            document.body.style.msTransform =  scale;        // IE 9
+            document.body.style.transform = scale;     // General
+            document.body.style.zoom = 1.0;
+            console.log('rescale');
+        })
+    </script>
+
+    <script>
+        var final_user_id = null;
+        var event_datetime = null;
+        var today_datetime = new Date();
+        const params = new URLSearchParams(document.location.search);
+        const event_id = params.get("e");
+
+        var cur_href = window.location.href
+        var prod_website = "https://partysignup.com"
+        console.log(cur_href);
+        if(cur_href.includes('127.0.0.1')){
+            prod_website = "127.0.0.1";
+        } else {
+            prod_website = "https://partysignup.com"
+        }
+
+        // var base_url = "http://aks.partysignup.com/api"
+        var base_url = "http://aks.localapi.com/api"
+        if (cur_href.includes(prod_website)){
+            base_url = "https://api.partysignup.com"
+            // base_url = "https://deapi.partysignup.com"
+            if (cur_href.includes("rsvp_dev")){
+                base_url = "https://deapi.partysignup.com"
+            }
+        }
+        console.log(base_url);
+        event_detail_url = base_url + "/location/get-event-details/" + event_id + "/"
+        signup_url = base_url + "/signuplogin/signup"
+        rsvp_reply_url = base_url + "/location/reply-on-event/"
+        all_country_list_url = base_url + "/setup/allow-country/"
+
+        event_detail_data = {}
+
+        $.ajax({
+            type: 'GET',
+            // headers: {
+            //             // 'Content-Type' : 'application/json',
+            //             'Access-Control-Allow-Origin': '*',
+            //             // 'Access-Control-Allow-Headers' : '*',
+            //             // 'Access-Control-Allow-Methods' : 'GET',
+            //             // 'Access-Control-Allow-Credentials' : true
+            //         },
+            dataType: "json",
+            url: event_detail_url,
+            success: function(data) {
+                console.log('data', data)
+                event_detail_data = data
+
+                // if(event_detail_data.id == undefined){
+                //     alert("Not valid URL!");
+                //     window.location.href = "/";
+                // }
+
+                if(event_detail_data.id != undefined){
+
+                    src = 'C:\Users\Raji\HTML\background project\rsvp_src\img\flower.png'+event_detail_data.background_id+'.png';
+                    $('body').css('background','rgba(0, 0, 0, 0) url('+src+') repeat 0% 0%');
+
+                    // var date = new Date(Date.parse(event_detail_data.datetime+" UTC"));
+                    new_form_date = event_detail_data.datetime.replace(/ /g,"T") + "Z";
+                    // console.log(event_detail_data.datetime);
+                    // console.log(new_form_date);
+                    var date = new Date(Date.parse(new_form_date));
+                    event_datetime = date;
+                    console.log(event_datetime);
+                    console.log(today_datetime);
+                    console.log(event_datetime < today_datetime);
+                    // Count down
+                    var c_now = moment();
+                    var c_event_date = moment(new_form_date);
+                    if(c_now.isBefore(c_event_date)) {
+                        var c_duration = c_event_date.diff(c_now);
+                        var c_duration_time = moment(c_duration);
+                        var c_duration_interval = moment.duration(c_duration, 'milliseconds');
+                        var interval = 1000;
+                        var c_count_down = setInterval(function(){
+                            c_duration_interval = moment.duration(c_duration_interval - interval, 'milliseconds');
+                            if(c_duration_interval.asSeconds() == 0)
+                                clearInterval(c_count_down);
+                            $('.c_second').html(c_duration_interval.seconds().toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping:false }));
+                            $('.c_minute').html(c_duration_interval.minutes().toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping:false }));
+                            $('.c_hour').html(c_duration_interval.hours().toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping:false }));
+                            $('.c_day').html(c_duration_interval.days().toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping:false }));
+                        }, interval);
+                    } else {
+                        //$('.count-down').addClass('hide');
+                    }
+                    $('.event_name').html(event_detail_data.event_name);
+                    $('.invited_by').html(event_detail_data.first_name + " " + event_detail_data.last_name);
+
+                    $('.event_date').html(date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' }));
+                    $('.event_time').html(date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+                    $('.event_duration').html(event_detail_data.checkin_duration + " hours");
+                    $('.desc-box').html(event_detail_data.checkin_description);
+                    if (event_detail_data.checkin_description == "" || event_detail_data.checkin_description == null){
+                        $(".desc").hide();
+                    }
+
+                    if (event_detail_data.is_online == 1 && event_detail_data.online_event_link != null && event_detail_data.online_event_link != ""){
+                        // $('.place_name').html("Online Event");
+
+                        $(".online_link_div").show();
+                        var a = document.getElementById('online_link');
+
+                        var online_event_link = event_detail_data.online_event_link
+                        if(online_event_link.includes('//')){
+                            a.href = event_detail_data.online_event_link
+                        } else {
+                            a.href = '//' + event_detail_data.online_event_link
+                        }
+
+                        $('.online_link').html(a.href);
+                        $('.address').html('Online Event');
+
+                    } else if (event_detail_data.save_the_date == 1) {
+                        // $('.map-mini').hide()
+                        if(event_detail_data.place != ""){
+                            $('.address').html(event_detail_data.place);
+                        } else {
+                            $('.address').html("Save the date");
+                        }
+                        $('.place_name').html("Save the date");
+                        $('.place_name_note').html("");
+                        $(".map-mini").css('background-image', 'none');
+                        $('#location_map').removeAttr('href');
+                        $('.place-img').remove();
+                    } else {
+                        $(".location_link_div").show();
+                        var fulladdress = event_detail_data.place
+                        if (event_detail_data.loc_city != ""){
+                            fulladdress += ", "+event_detail_data.loc_city;
+                        }
+                        if (event_detail_data.place != ""){
+                            $('.address').html(event_detail_data.place);
+                        }
+                        if (event_detail_data.loc_state != ""){
+                            fulladdress += ", "+event_detail_data.loc_state
+                        }
+                        if (event_detail_data.loc_country != ""){
+                            fulladdress += ", "+event_detail_data.loc_country
+                        }
+                        if (event_detail_data.loc_postal_code != ""){
+                            fulladdress += " - "+event_detail_data.loc_postal_code
+                        }
+                        $('.place_name').html(fulladdress);
+
+                        //var map_url = "https://maps.google.com/?q="+event_detail_data.loc_latitude+","+event_detail_data.loc_longitude
+                        var map_url = "https://maps.google.com/?q="+fulladdress;
+                        var a = document.getElementById('location_map'); //or grab it by tagname etc
+                        a.href = map_url
+                    }
+
+
+                    if (event_detail_data.contribution_link != null && event_detail_data.contribution_link != ""){
+                        $(".contribution_link_div").show();
+                        var contribution_link = "https://www.paypal.me/"+event_detail_data.contribution_link
+                        if (event_detail_data.contribution_amount != "" || event_detail_data.contribution_amount != null){
+                            contribution_link += "/"+event_detail_data.contribution_amount
+                        }
+                        var a = document.getElementById('contribution_link'); //or grab it by tagname etc
+                        a.href = contribution_link;
+                        $('.contribution_link').html(contribution_link);
+                        $('.contribution_amount').html(event_detail_data.contribution_amount);
+                    }
+
+                    if (event_detail_data.gift_registory_link != null && event_detail_data.gift_registory_link != ""){
+                        $(".gift_registory_link_div").show();
+                        var gift_registory_link = event_detail_data.gift_registory_link
+                        if(event_detail_data.gift_registory_link.includes('//')){
+                            gift_registory_link = event_detail_data.gift_registory_link
+                        } else {
+                            gift_registory_link = '//' + event_detail_data.gift_registory_link
+                        }
+                        var a = document.getElementById('gift_registory_link'); //or grab it by tagname etc
+                        a.href = gift_registory_link
+                        $('.gift_registory_link').html(event_detail_data.gift_registory_link);
+                    }
+
+                    if (event_detail_data.isolate_count_adult_child == 0){
+                        $("#children").hide();
+                        // $('#children').prop('required', false);
+                    }
+
+                    var my_country_code = event_detail_data.my_country_code;
+                    if (my_country_code == null || my_country_code == "" || my_country_code == "null"){
+                        my_country_code = event_detail_data.country_code
+                    }
+                    if (my_country_code == null || my_country_code == "" || my_country_code == "null"){
+                        my_country_code = "+1"
+                    }
+                    // $('#country_code').val(my_country_code);
+                    document.getElementById("country_code").value = my_country_code;
+
+
+                    // $.ajax({
+                    //     type: 'GET',
+                    //     dataType: "json",
+                    //     url: all_country_list_url,
+                    //     success: function(response) {
+                    //         List = response.data
+                    //         var is_country_selected = false;
+                    //         var iso_code = event_detail_data.my_iso_code;
+                    //         if (iso_code == null || iso_code == "" || iso_code == "null"){
+                    //             iso_code = event_detail_data.iso_code
+                    //         }
+                    //
+                    //         $('#country_code').empty();
+                    //         // $('#country_code').append('<option value="" selected disabled>Select Your Country</option>');
+                    //         for (i in List ) {
+                    //             // if (event_detail_data.country_code == List[i].country_code || event_detail_data.loc_country.toLowerCase() == List[i].country_name.toLowerCase()){
+                    //             if (iso_code.toLowerCase() == List[i].iso_code.toLowerCase()){
+                    //                 $('#country_code').append('<option value="' + List[i].country_code + '" iso_code="' + List[i].iso_code + '" selected>' + List[i].country_name + '</option>');
+                    //                 is_country_selected = true;
+                    //             }
+                    //             else{
+                    //                 $('#country_code').append('<option value="' + List[i].country_code + '" iso_code="' + List[i].iso_code + '">' + List[i].country_name + '</option>');
+                    //             }
+                    //
+                    //         }
+                    //
+                    //         if (is_country_selected == false) {
+                    //             $("#country_code option[iso_code='"+event_detail_data.iso_code+"']").attr('selected', 'selected');
+                    //         }
+                    //     },
+                    //     error: function(XMLHttpRequest, textStatus, errorThrown){
+                    //         console.log(XMLHttpRequest);
+                    //         console.log(textStatus);
+                    //         console.log(errorThrown);
+                    //     }
+                    // });
+
+
+                }
+                // else {
+                //     alert("Event not found. You can download our Party Signup app for more details.")
+                //     window.location.href = "https://partysignup.com/event.html";
+                // }
+
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown){
+                console.log(XMLHttpRequest);
+                console.log(textStatus);
+                console.log(errorThrown);
+            }
+        });
+
+        function country_code_validation(validate_phone_number=true){
+            var country_code = document.forms["contact"]["country_code"].value;
+            var phone_number = document.forms["contact"]["phone_number"].value;
+            var minlength = 2;
+            var maxlength = 4;
+
+            if (country_code == "") {
+                // alert("Please select country");
+                alert("Please enter country code");
+                return false;
+            }
+            if (!country_code.startsWith("+")) {
+                country_code = '+'+country_code;
+                document.getElementById("country_code").value = country_code
+                // alert("Please enter country code with +");
+                // return false;
+            }
+            if (country_code.length < minlength || country_code.length > maxlength) {
+                alert("Please enter valid country code");
+                return false;
+            }
+            var count = country_code.split("+").length - 1;
+            if (count > 1) {
+                alert("Please enter valid country code");
+                return false;
+            }
+            if (phone_number != "" && validate_phone_number == true) {
+                phone_number_validation();
+            }
+            return true;
+        }
+
+        // number will be with country code
+        function isValidNumber(number) {
+            return new libphonenumber.parsePhoneNumber(number).isValid()
+        }
+
+        function formReset(){
+            
+        }
+
+
+        function phone_number_validation(){
+            var minlength = 8;
+            var maxlength = 14;
+            var country_code = document.forms["contact"]["country_code"].value;
+            var phone_number = document.forms["contact"]["phone_number"].value;
+
+            if (!country_code_validation(validate_phone_number=false)){
+                return false
+            }
+           
+            if (phone_number.length >= minlength && phone_number.length <= maxlength && !phone_number.startsWith("+") && !phone_number.startsWith("0") && phone_number.match(/^-{0,1}\d+$/) && isValidNumber(country_code + phone_number) ) {
+                user_detail_url = base_url + "/user/check-user-exists/" + country_code + phone_number + "/"
+                $.ajax({
+                    type: 'GET',
+                    dataType: "json",
+                    url: user_detail_url,
+                    success: function(response) {
+                        console.log('response full', response);
+
+                        if ( response.hasOwnProperty("first_name") ) {
+                            $("#first_name").val(response.first_name);
+                        };
+                        if ( response.hasOwnProperty("last_name") ) {
+                            $("#last_name").val(response.last_name);
+                        };
+                        
+                        if (!response.hasOwnProperty("id_user") && $('#first_name').prop('readonly')) {
+                            $("#first_name").val(null);
+                            $("#last_name").val(null);
+                            $(".join_further_value").css('display', 'none');
+                            $(".btnGreen").removeClass('active');
+                            $(".btnGreen").removeClass('focus');
+                            $(".btnYellow").removeClass('active');
+                            $(".btnYellow").removeClass('focus');
+                            $(".btnRed").removeClass('active');
+                            $(".btnRed").removeClass('focus');
+                            $('input[name="rsvp"]').prop('checked', false);
+                        };
+
+                        if(response.id_user!=null && final_user_id != response.id_user){
+                            final_user_id = response.id_user
+                            // $("#first_name").val(response.first_name);
+                            // $("#last_name").val(response.last_name);
+
+                            $('#first_name').prop('readonly', true);
+                            $('#last_name').prop('readonly', true);
+                            // if (event_detail_data.id_user == final_user_id){
+                            //     // $("#submit").hide();
+                            //     $('button#submit').addClass("disabled");
+                            // }
+
+                            // prefilled RSVP
+                            rsvp_detail_url = base_url + "/location/get-rsvp-details/" + event_id + "/" + response.id_user + "/"
+                            $.ajax({
+                                type: 'GET',
+                                dataType: "json",
+                                url: rsvp_detail_url,
+                                success: function(response) {
+                                    // alert(response);
+                                    // $("input[name='rsvp'][value='join']").click();
+                                    // console.log(response);
+                                    if ( response.hasOwnProperty("checkin_lookup_code") ) {
+                                        if (response.checkin_lookup_code == 115){
+                                            $("input[name='rsvp'][value='join']").click();
+                                        } else if (response.checkin_lookup_code == 116){
+                                            $("input[name='rsvp'][value='may_be']").click();
+                                        } else {
+                                            $("input[name='rsvp'][value='can_not_join']").click();
+                                        }
+                                    } else {
+                                        $(".join_further_value").css('display', 'none');
+                                        $(".btnGreen").removeClass('active');
+                                        $(".btnGreen").removeClass('focus');
+                                        $(".btnYellow").removeClass('active');
+                                        $(".btnYellow").removeClass('focus');
+                                        $(".btnRed").removeClass('active');
+                                        $(".btnRed").removeClass('focus');
+                                        $('input[name="rsvp"]').prop('checked', false);
+                                    }
+
+                                    if (event_detail_data.isolate_count_adult_child == 0){
+                                        if ( response.hasOwnProperty("total_guest_count") ) {
+                                            document.forms["contact"]["adult"].value = response.total_guest_count
+                                        }
+                                    } else {
+                                        if ( response.hasOwnProperty("adult_guest_count") ) {
+                                            document.forms["contact"]["adult"].value = response.adult_guest_count
+                                        }
+                                        if ( response.hasOwnProperty("child_guest_count") ) {
+                                            document.forms["contact"]["children"].value = response.child_guest_count
+                                        }
+                                    }
+
+                                },
+                                error: function(XMLHttpRequest, textStatus, errorThrown){
+                                    console.log(XMLHttpRequest);
+                                    console.log(textStatus);
+                                    console.log(errorThrown);
+                                }
+                            });
+
+                        } else if (final_user_id != response.id_user) {
+                            final_user_id = null
+                            $('#first_name').prop('readonly', false);
+                            $('#last_name').prop('readonly', false);
+
+                            // $("#submit").show();
+                            // $('button#submit').removeClass("disabled",);
+                        }
+
+                        console.log(response);
+                        console.log(final_user_id);
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown){
+                        console.log(XMLHttpRequest);
+                        console.log(textStatus);
+                        console.log(errorThrown);
+                    }
+                });
+            }else {
+                alert("Please enter valid phone number");
+                return false;
+            }
+            return true;
+        }
+
+        function validateForm() {
+          console.log("validateForm");
+          if (event_detail_data.id_user == final_user_id){
+              alert("Event organizer can not submit RSVP");
+              return false;
+          }
+
+          if (event_detail_data.status == 'D'){
+              alert("Event is deleted already.");
+              return false;
+          }
+
+          if (event_datetime < today_datetime){
+              alert("Sorry, the event has already passed.");
+              return false;
+          }
+
+          // var country_code = document.forms["contact"]["country_code"].value;
+          // var phone_number = document.forms["contact"]["phone_number"].value;
+          var first_name = document.forms["contact"]["first_name"].value;
+          var last_name = document.forms["contact"]["last_name"].value;
+          var rsvp = document.forms["contact"]["rsvp"].value;
+
+          if(event_detail_data.id == undefined){
+              alert("Not a valid event")
+              return false;
+          }
+
+          if (!country_code_validation(validate_phone_number=false)){
+              return false
+          }
+
+          if (first_name == "" || last_name == "") {
+            alert("Please enter all details correctly");
+            return false;
+          }
+
+          if (!phone_number_validation()){
+              return false
+          }
+
+          var rsvp_options = ["join", "can_not_join", "may_be"];
+          if (rsvp_options.includes(rsvp) == false){
+              alert("Select RSVP")
+              return false;
+          }
+          // if (rsvp == "join"){
+          //     // var adult = document.forms["contact"]["adult"].value;
+          //     //
+          //     // if (adult == ""){
+          //     //     alert("Please enter number of adults");
+          //     //     return false;
+          //     // }
+          //     //
+          //     // if (event_detail_data.isolate_count_adult_child != 0){
+          //     //     var children = document.forms["contact"]["children"].value;
+          //     //     if (children == ""){
+          //     //         alert("Please enter number of childrens");
+          //     //         return false;
+          //     //     }
+          //     // }
+          // }
+
+          return true
+        }
+
+        function rsvp_reply(p=null){
+            var rsvp = document.forms["contact"]["rsvp"].value;
+            var checkin_lookup_code = 113;
+            if (rsvp == "join") {
+                checkin_lookup_code = 115;
+            } else if (rsvp == "may_be") {
+                checkin_lookup_code = 116;
+            }
+            // rsvp reply on event
+            rsvp_post_json = {
+                "checkin_suppliment_id": event_detail_data.id,  // event id
+                "id_user": final_user_id,
+                // "checkin_lookup_code": rsvp == "join" ? 111 : 113,
+                "checkin_lookup_code": checkin_lookup_code,
+                "total_guest_count": 0,
+                "adult_guest_count": 0,
+                "child_guest_count": 0,
+                "application_version": "0",
+                "application_os_version": "0",
+                "application_type": "website",
+                "application_device_type": "website",
+                "last_update_workstation_id": "null",
+            }
+
+            if (rsvp == "join" || rsvp == "may_be"){
+                var adult = document.forms["contact"]["adult"].value;
+                if (adult == ""){
+                    adult = 0;
+                }
+                rsvp_post_json["adult_guest_count"] = parseInt(adult)
+
+                var children = 0
+                if (event_detail_data.isolate_count_adult_child != 0){
+                    children = document.forms["contact"]["children"].value;
+                    if (children == ""){
+                        children = 0;
+                    }
+                    rsvp_post_json["child_guest_count"] = parseInt(children)
+                }
+
+                rsvp_post_json["total_guest_count"] = parseInt(adult) + parseInt(children)
+            }
+
+            console.log(rsvp_post_json)
+            $.ajax({
+                type: 'POST',
+                // dataType: "form-data",
+                url: rsvp_reply_url,
+                data : rsvp_post_json,
+                success: function(response) {
+                    console.log(rsvp);
+                    if(rsvp == 'can_not_join'){
+                        alert("Thank you. Your response has been notified to the event host.");
+                        window.location.href = "https://partysignup.com/event.html";
+                    } else {
+                        confettiEffect();
+                        setTimeout(function(){
+                                alert("Thank you. Your response has been notified to the event host.");
+                                window.location.href = "https://partysignup.com/event.html";
+                        }, 2500);
+                    }
+                    
+                    // if(p != null){
+                    //     alert("You can now login to party singup app with " + p + " password and your phone no. to see who else is coming to the event.")
+                    // }
+                    console.log(response);
+                    console.log(final_user_id);
+                    // alert('redirecting to party signup website');
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown){
+                    console.log(XMLHttpRequest);
+                    console.log(textStatus);
+                    console.log(errorThrown);
+                    locked = false;
+                }
+            })
+        }
+
+        function user_registration(){
+            var country_code = document.forms["contact"]["country_code"].value;
+            var phone_number = document.forms["contact"]["phone_number"].value;
+            var first_name = document.forms["contact"]["first_name"].value;
+            var last_name = document.forms["contact"]["last_name"].value;
+
+            let p = Math.random().toString(36).substring(8);
+
+            console.log("user registration");
+            post_data = {
+                "first_name": first_name,
+                "last_name": last_name,
+                "country_code": country_code,
+                "mobile_phone_number": country_code + phone_number,
+                "password": p,
+                "application_version": "0",
+                "application_os_version": "0",
+                "application_type": "website",
+                "application_device_type": "website",
+                "last_update_workstation_id": "null",
+                "loc_longitude": "0",
+                "loc_latitude": "0",
+                "id_termsandconditions": "1"
+            }
+
+            $.ajax({
+                type: 'POST',
+                // dataType: "form-data",
+                url: signup_url,
+                data : post_data,
+                success: function(response) {
+                    if(response.data.id_user!=null){
+                        final_user_id = response.data.id_user
+                    }else {
+                        final_user_id = null
+                    }
+                    console.log(response);
+                    console.log(final_user_id);
+                    rsvp_reply(p);
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown){
+                    console.log(XMLHttpRequest);
+                    console.log(textStatus);
+                    console.log(errorThrown);
+                    locked = false;
+                }
+            })
+        }
+
+        function submitForm() {
+            if (final_user_id == null){
+                //user registration then call rsvp_reply
+                user_registration();
+            }
+            else{
+                rsvp_reply();
+            }
+        }
+
+        $(document).ready(function() {
+            // on click of radio button
+            // $("input[name$='rsvp']").click(function() {
+            $("input[name$='rsvp']").change(function() {
+                var test = $(this).val();
+                // console.log(test);
+                if(test=="join" || test=="may_be"){
+                    if (event_detail_data.allow_guest != 0){
+                        $(".join_further_value").show();
+                        // $('#adult').prop('required', true);
+                        // if (event_detail_data.isolate_count_adult_child != 0){
+                        //     $('#children').prop('required', true);
+                        // }
+                    }
+                }else {
+                    $(".join_further_value").hide();
+                    // $('#adult').prop('required', false);
+                    // if (event_detail_data.isolate_count_adult_child != 0){
+                    //     $('#children').prop('required', false);
+                    // }
+                }
+            });
+
+            $("#country_code").change(function(){
+                country_code_validation();
+            });
+
+            $("#phone_number").change(function(){
+                phone_number_validation();
+            });
+
+            var locked = false;
+            $('button#submit').click( function(event) {
+                event.preventDefault();
+                if (!locked) {
+                    locked = true;
+
+                    if(validateForm()){
+                        submitForm();
+                    }
+                    else{
+                        locked = false;
+                    }
+
+                }
+                // $('button#submit').attr("disabled", false);
+                // event.preventDefault();
+            });
+
+            
+
+        });
+        function confettiEffect(){
+            var count = 300;
+            var defaults = {
+                origin: { y: 0.85 }
+            };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, {
+                spread: 33,
+                startVelocity: 80,
+            });
+            fire(0.2, {
+             spread: 33,
+            });
+            fire(0.35, {
+                spread: 33,
+                decay: 0.91,
+                scalar: 0.8
+            });
+            fire(0.1, {
+                spread: 33,
+                startVelocity: 80,
+                decay: 0.92,
+                scalar: 1.2
+            });
+            fire(0.1, {
+                spread: 33,
+                startVelocity: 80,
+            });
+        }
+
+        function getMobileOperatingSystem() {
+          var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+          console.log(userAgent);
+
+              // Windows Phone must come first because its UA also contains "Android"
+            if (/windows phone/i.test(userAgent)) {
+                return "Windows Phone";
+            }
+
+            if (/android/i.test(userAgent)) {
+                return "Android";
+            }
+
+            // iOS detection from: http://stackoverflow.com/a/9039885/177710
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                return "iOS";
+            }
+
+            return "unknown";
+        }
+
+        function openAppLink(){
+            window.open('https://partysignup.com/event.html', '_blank');
+            // var device_os = getMobileOperatingSystem();
+            // if (device_os == "iOS"){
+            //     window.open('https://apps.apple.com/in/app/party-signup-invite-rsvp/id1482269560', '_blank');
+            // }else{
+            //     window.open('https://play.google.com/store/apps/details?id=com.jewelstud.Partysignup', '_blank');
+            // }
+        }
+        
+    </script>
+
+</head>
+<!-- <body data-gr-c-s-loaded="true" style="background: url(rsvp_src/img/bg1.png) 0% 0% / 100% 100% no-repeat fixed;"> -->
+<body data-gr-c-s-loaded="true" class="body-background">
+
+<div class="container">
+          <form name="contact" class="main-box">
+            <div class="event-info">
+                <div class="heading">
+                    <h3 style="text-align: center;"><span class="invited_by" style="text-transform: capitalize;font-size: 26px;"></span></h3>
+                    <h3 style="text-align: center;margin-top: 9px;"><span style="color: #e82853;font-family: 'Pacifico';">invites you to</span></h3>
+                    <h3 class="event_name" style="margin-top: 9px; text-transform: capitalize; font-size: 26px;"></h3>
+                    <h3 style="margin-top:9px;"><span class="event_date"></span> | <span class="event_time"></span> | <span class="event_duration"></span> </h3>
+                    <h3 style="margin-top:9px;"> <img src="rsvp_src/img/map.png" style="width: 20px;vertical-align: middle;"><span class="address" style="vertical-align: middle;padding-right: 20px;font-size: 18px;">Save the Date</span></h3>
+                    <!-- <p>RSVP at Party Signup</p> -->
+                </div>
+            </div>
+
+            <div class="count-down">
+                <table class="tbl-count-down">
+                    <tr>
+                        <td> <span class="c_day">00</span></td>
+                        <td> <span class="count-down-separator">:</span></td>
+                        <td> <span class="c_hour">00</span></td>
+                        <td> <span class="count-down-separator">:</span></td>
+                        <td> <span class="c_minute">00</span></td>
+                        <td> <span class="count-down-separator">:</span></td>
+                        <td> <span class="c_second">00</span></td>
+                    </tr>
+                    <tr>
+                        <td> <span class="count-down-text"> DAYS</span></td>
+                        <td></td>
+                        <td> <span class="count-down-text"> HOURS</span></td>
+                        <td></td>
+                        <td> <span class="count-down-text"> MINUTES</span></td>
+                        <td></td>
+                        <td> <span class="count-down-text"> SECONDS</span></td>
+                    </tr>
+                </table>
+                    
+            </div>
+            <div class="map map-mini location_link_div" style="display: none;">
+                <a href="" target="_blank" title="Location" id="location_map">
+                    <div class="map-place">
+                        <p style="padding-top: 60px;padding-bottom: 60px;font-size: 16px;font-weight: 700;text-align: center ;"> <span class="small-text place_name_note" style="text-decoration: underline;">( click map for directions )</span> </p> 
+                    </div>
+                    <p class="place"> <img class="place-img" src="rsvp_src/img/map.png">  <span class="place_name" style="font-size: 13px;"></span></p>
+                    <!-- <p class="place">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d26369770.413590293!2d-113.68745730799483!3d36.216018547509485!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x54eab584e432360b%3A0x1c3bb99243deb742!2sUnited%20States!5e0!3m2!1sen!2sin!4v1589175936160!5m2!1sen!2sin" width="100%" height="auto" frameborder="0" style="border:0; border-radius: 20px;" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
+                        <span class="place_name"></span>
+                    </p> -->
+
+                    <!-- <a href="" target="_blank" title="App" id="app_link"> -->
+                        <!-- <img src="rsvp_src/img/mapbg.png" width="100%"> -->
+                        <!-- <img src="rsvp_src/img/mapbg_2.png" width="100%" onclick="openAppLink()" style="cursor: pointer;"> -->
+                    <!-- </a> -->
+                </a>       
+            </div>
+
+            <div class="desc">
+                <p class="desc-header" style="padding-left: 15px;">Party Details: </p>
+                <p class="desc-box" style="padding-left: 15px;"></p>
+            </div>
+
+            <div class="linktag online_link_div" style="display: none;">
+                <p class="boxHeader">Online Party Link</h3>
+                <p class="place">
+                    <a href="" target="_blank" title="Constribution" id="online_link" style="text-align: center;">
+                        <span class="small-text online_link" style="color: blue; text-decoration-line: underline; word-break: break-all;font-weight: 600;"></span>
+                    </a>
+                </p>
+            </div>
+
+            <div class="linktag contribution_link_div" style="display: none;">
+                <p class="boxHeader">Payment Link</h3>
+                <p class="place">
+                    <span style="font-size: 14px;color: #000;">Guests are requested to contribute $<span class="contribution_amount"></span> towards the party using the link below.</span>  <br/><br/>
+                    <a href="" target="_blank" id="contribution_link">
+                        <span class="small-text contribution_link" style="color: blue; text-decoration-line: underline; word-break: break-all;"></span>   
+                    </a>
+                </p>
+            </div>
+
+            <div class="linktag gift_registory_link_div" style="display: none;">
+                <p class="boxHeader">Gift Registry Link</h3>
+                <p class="place">
+                    <span style="font-size: 14px;color: #000;">Guests are allowed to bring gifts or buy from the gift registry Link below.</span>  <br/><br/>
+                    <a href="" target="_blank" id="gift_registory_link">
+                        <span class="small-text gift_registory_link" style="color: blue; text-decoration-line: underline; word-break: break-all;"></span>
+                    </a>
+                </p>
+            </div>
+
+            <!--<div class="downloadbox">
+                <img src="rsvp_src/img/mapbg_2.png" width="100%" onclick="openAppLink()" style="cursor: pointer;">
+            </div>-->
+
+            <div class="form-box">
+
+                <!-- <fieldset>
+                    <span>Select Your Country</span>
+                    <select type="select" id="country_code" name="country_code" tabindex="1" required=""  class="rounded-circle" autofocus>
+                    </select>
+                </fieldset> -->
+                <fieldset>
+                    <div style="display: inline">
+                        <input placeholder="Code" type="text" id="country_code" name="country_code" tabindex="1" required="" style='width: 20%; float:left;margin-right: 10px;' minlength="2" maxlength="4" onkeypress="return isPhoneCountryCode(event)" onpaste="return false;">
+                        <input placeholder="Your Phone Number" type="tel" id="phone_number" name="phone_number" tabindex="2" required="" style='width: calc(80% - 10px);; float:left;' minlength="8" maxlength="14" onkeypress="return isNumber(event)" onpaste="return false;">
+                    </dic>
+                </fieldset>
+                <fieldset>
+                  <input placeholder="Your First Name" type="text" id="first_name" name="first_name" tabindex="3" required="" minlength="2" maxlength="30" onkeypress="return isCharacterAndSpace(event)"  onpaste="return false;">
+                </fieldset>
+                <fieldset>
+                  <input placeholder="Your Last Name" type="text" id="last_name" name="last_name" tabindex="4" required="" minlength="2" maxlength="30"  onkeypress="return isCharacterAndSpace(event)"  onpaste="return false;">
+                </fieldset>
+                <fieldset class="rsvp-box">
+                    <h4>RSVP</h4>
+                    <!-- <input type="radio" class="radio" id="join" name="rsvp" value="join" tabindex="5" required="">
+                    <label for="join">Join</label>
+                    <input type="radio" class="radio" id="can_not_join" name="rsvp" value="can_not_join" tabindex="6" required="">
+                    <label for="can_not_join">Can't Join</label><br> -->
+
+                    <div class="btn-group-justified flex-wrap btn-group-toggle button_choice" data-toggle="buttons">
+                      <label class="btn btn-outline-warning btnGreen" style="color:limegreen; border-color:limegreen;font-weight: 700;">
+                        <input type="radio" name="rsvp" id="join" autocomplete="off" value="join"> Yes
+                      </label>
+                      <label class="btn btn-outline-warning btnYellow" style="color:gold; border-color:gold;font-weight: 700;">
+                        <input type="radio" name="rsvp" id="may_be" autocomplete="off" value="may_be"> May Be
+                      </label>
+                      <label class="btn btn-outline-warning btnRed" style="color:red; border-color:red;font-weight: 700;">
+                        <input type="radio" name="rsvp" id="can_not_join" autocomplete="off" value="can_not_join"> Can't Join
+                      </label>
+                    </div>
+                </fieldset>
+
+                <div class="join_further_value" style="display: none;">
+                    <h6>Add Additional Guests</h6>
+
+
+                    <div class="row">
+
+                        <ul class="guest-box">
+                            <li id='adult'>
+                                <fieldset>
+                                    <p>Adult</p>
+                                    <input type='button' value='-' class='qtyminus' field='adult' />
+                                    <input type='text' name='adult' value='0' class='qty' />
+                                    <input type='button' value='+' class='qtyplus' field='adult' />
+                                </fieldset>
+                            </li>
+                            <li id='children'>
+                                <fieldset>
+                                <p>Children</p>
+                                    <input type='button' value='-' class='qtyminus' field='children' />
+                                    <input type='text' name='children' value='0' class='qty' />
+                                    <input type='button' value='+' class='qtyplus' field='children' />
+                                </fieldset>
+                            </li>
+                        </ul>
+
+                    </div>
+                </div>
+
+                <fieldset>
+                  <button name="submit" type="submit" id="submit" class="submit-btn" data-submit="...Sending">SEND</button>
+                </fieldset>
+            </div>
+
+
+           <!--  <div class="download">
+                <p class="copyright">Download the App <a href="https://play.google.com/store/apps/details?id=com.jewelstud.Partysignup" target="_blank" title="Party Signup APP"> <img src="rsvp_src/img/android.png" height="45px;"> </a> or <a href="https://apps.apple.com/in/app/party-signup-invite-rsvp/id1482269560" target="_blank" title="Party Signup APP"> <img src="rsvp_src/img/apple.png" height="45px;"> </a> to check who is coming to the event.</p>
+            </div> -->
+
+
+          </form>
+        </div>
+
+    <script type="text/javascript">
+    function isNumber(evt) {
+        evt = (evt) ? evt : window.event;
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        if ( (charCode > 31 && charCode < 48) || charCode > 57) {
+            return false;
+        }
+        return true;
+    }
+
+    function isCharacterAndSpace(evt){
+        evt = (evt) ? evt : window.event;
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        if((charCode >= 65 && charCode <=90) || (charCode >= 97 && charCode <=122) || charCode == 32 || charCode == 8)
+            return true;
+        else 
+            return false;
+    }
+
+    function isPhoneCountryCode(evt) {
+        evt = (evt) ? evt : window.event;
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        // console.log(evt)
+        // console.log(charCode)
+        if (charCode == 43){
+            return true;
+        }
+        if ( (charCode > 31 && charCode < 48) || charCode > 57) {
+            return false;
+        }
+        return true;
+    }
+
+        jQuery(document).ready(function(){
+    // This button will increment the value
+    $('.qtyplus').click(function(e){
+        // Stop acting like a button
+        e.preventDefault();
+        // Get the field name
+        fieldName = $(this).attr('field');
+        // Get its current value
+        var currentVal = parseInt($('input[name='+fieldName+']').val());
+        // If is not undefined
+        if (!isNaN(currentVal)) {
+            // Increment
+            $('input[name='+fieldName+']').val(currentVal + 1);
+        } else {
+            // Otherwise put a 0 there
+            $('input[name='+fieldName+']').val(0);
+        }
+    });
+    // This button will decrement the value till 0
+    $(".qtyminus").click(function(e) {
+        // Stop acting like a button
+        e.preventDefault();
+        // Get the field name
+        fieldName = $(this).attr('field');
+        // Get its current value
+        var currentVal = parseInt($('input[name='+fieldName+']').val());
+        // If it isn't undefined or its greater than 0
+        if (!isNaN(currentVal) && currentVal > 0) {
+            // Decrement one
+            $('input[name='+fieldName+']').val(currentVal - 1);
+        } else {
+            // Otherwise put a 0 there
+            $('input[name='+fieldName+']').val(0);
+        }
+    });
+});
+
+    </script>
+</body>
+</html>
